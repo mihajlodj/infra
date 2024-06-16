@@ -8,7 +8,7 @@ services:
     ports:
       - "9411:9411"
     networks:
-      - ftn_devops_network
+      - ftn_devops_network_swarm
 
   loki:
     image: grafana/loki:2.9.0
@@ -16,7 +16,7 @@ services:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
     networks:
-      - ftn_devops_network
+      - ftn_devops_network_swarm
 
   grafana:
     environment:
@@ -46,25 +46,24 @@ services:
     ports:
       - "3000:3000"
     networks:
-      - ftn_devops_network
+      - ftn_devops_network_swarm
 
   prometheus:
     image: prom/prometheus:v2.35.0
-    restart: on-failure
     ports:
       - "9090:9090"
     volumes:
       - ./prometheus:/etc/prometheus
       - prometheus:/var/lib/prometheus
     networks:
-      - ftn_devops_network
+      - ftn_devops_network_swarm
 
   node-exporter:
     image: prom/node-exporter:v1.1.2
     ports:
       - "9100:9100"
     networks:
-      - ftn_devops_network
+      - ftn_devops_network_swarm
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor
@@ -81,7 +80,7 @@ services:
       - /var/lib/docker/:/var/lib/docker:ro
       - /dev/disk/:/dev/disk:ro
     networks:
-      - ftn_devops_network
+      - ftn_devops_network_swarm
 
   # DATABASE
   postgres-db-user:
@@ -89,14 +88,14 @@ services:
     ports:
       - "5433:5432"
     networks:
-      - ftn_devops_network
+      - ftn_devops_network_swarm
     environment:
       POSTGRES_DB: devops_user_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: devops123
 
   # SERVICES
-  # TODO set tags and add other services
+  # TODO add other services
   user-service:
     image: mihajlodj/devops-user-service:1.0.1
     environment:
@@ -107,17 +106,19 @@ services:
     ports:
       - "8080:8080"
     networks:
-      - ftn_devops_network
+      - ftn_devops_network_swarm
     depends_on:
       - postgres-db-user
       - zipkin
       - loki
       - grafana
-    restart: on-failure
+    deploy:
+      restart_policy:
+        condition: on-failure
 
 # NETWORKS & VOLUMES
 networks:
-  ftn_devops_network:
+  ftn_devops_network_swarm:
     external: true
 
 volumes:
