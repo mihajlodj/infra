@@ -1,0 +1,260 @@
+version: '3.8'
+
+services:
+
+  # MONITORING
+  zipkin:
+    image: openzipkin/zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - ftn_devops_network_swarm
+
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - ftn_devops_network_swarm
+
+  grafana:
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+        - name: Loki
+          type: loki
+          access: proxy
+          orgId: 1
+          url: http://loki:3100
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+        EOF
+        /run.sh
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    networks:
+      - ftn_devops_network_swarm
+
+  prometheus:
+    image: prom/prometheus:v2.35.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus:/var/lib/prometheus
+    networks:
+      - ftn_devops_network_swarm
+
+  node-exporter:
+    image: prom/node-exporter:v1.1.2
+    ports:
+      - "9100:9100"
+    networks:
+      - ftn_devops_network_swarm
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    command:
+      - '-port=8090'
+    ports:
+      - "8090:8090"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    networks:
+      - ftn_devops_network_swarm
+    cap_add:
+      - SYS_PTRACE
+
+  # QUEUE
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      - "5672:5672"
+    networks:
+      - ftn_devops_network_swarm
+
+  # DATABASE
+  postgres-db-user:
+    image: postgres:latest
+    ports:
+      - "5433:5432"
+    networks:
+      - ftn_devops_network_swarm
+    environment:
+      POSTGRES_DB: devops_user_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: devops123
+
+  postgres-db-notification:
+    image: postgres:latest
+    ports:
+      - "5436:5432"
+    networks:
+      - ftn_devops_network_swarm
+    environment:
+      POSTGRES_DB: devops_notification_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: devops123
+
+  postgres-db-hotels:
+    image: postgres:latest
+    ports:
+      - "5435:5432"
+    networks:
+      - ftn_devops_network_swarm
+    environment:
+      POSTGRES_DB: devops_hotels_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: devops123
+
+  postgres-db-reservation:
+    image: postgres:latest
+    ports:
+      - "5434:5432"
+    networks:
+      - ftn_devops_network_swarm
+    environment:
+      POSTGRES_DB: devops_reservation_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: devops123
+
+  mongo-db:
+    image: mongo
+    expose:
+      - "27017"
+    ports:
+      - "27017:27017"
+    networks:
+      - ftn_devops_network_swarm
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: devops123
+      MONGO_INITDB_ROOT_PASSWORD: devops123
+    restart: on-failure
+
+  # SERVICES
+  user-service:
+    image: mihajlodj/devops-user-service:1.2.0
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db-user:5432/devops_user_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: devops123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8080:8080"
+    networks:
+      - ftn_devops_network_swarm
+    depends_on:
+      - postgres-db-user
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  notification-service:
+    image: mihajlodj/devops-notification-service:1.0.0
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db-notification:5432/devops_notification_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: devops123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_MAIL_PASSWORD: # TODO add!
+    ports:
+      - "8084:8084"
+    networks:
+      - ftn_devops_network_swarm
+    depends_on:
+      - postgres-db-notification
+      - rabbitmq
+      - user-service
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  hotels-service:
+    image: mihajlodj/devops-hotels-service:1.0.0
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db-hotels:5432/devops_hotels_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: devops123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8081:8081"
+    networks:
+      - ftn_devops_network_swarm
+    depends_on:
+      - postgres-db-hotels
+      - notification-service
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  rating-service:
+    image: mihajlodj/devops-rating-service:1.0.0
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://devops123:devops123@mongo-db:27017/devops_rating_db?authSource=admin
+      SPRING_DATA_MONGODB_DATABASE: devops_rating_db
+    ports:
+      - "8083:8083"
+    networks:
+      - ftn_devops_network_swarm
+    depends_on:
+      - mongo-db
+      - hotels-service
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  reservation-service:
+    image: mihajlodj/devops-reservation-service:1.0.0
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db-reservation:5432/devops_reservation_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: devops123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8082:8082"
+    networks:
+      - ftn_devops_network_swarm
+    depends_on:
+      - postgres-db-reservation
+      - hotels-service
+    deploy:
+      restart_policy:
+        condition: on-failure
+
+  # FRONTEND
+  devops-frontend:
+    image: mihajlodj/devops-fe:latest
+    ports:
+      - "4200:80"
+    networks:
+      - ftn_devops_network_swarm
+
+# NETWORKS & VOLUMES
+networks:
+  ftn_devops_network_swarm:
+    external: true
+
+volumes:
+  postgres-db-user:
+  postgres-db-notification:
+  postgres-db-hotels:
+  postgres-db-reservation:
+  mongo-db:
+  prometheus:
+
