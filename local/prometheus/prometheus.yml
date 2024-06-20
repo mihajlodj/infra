@@ -18,8 +18,22 @@ scrape_configs:
     metrics_path: '/actuator/prometheus'
     static_configs:
       - targets: ['user-service:8080']
-
-    # TODO add other services
+  - job_name: 'reservation-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['reservation-service:8082']
+  - job_name: 'rating-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['rating-service:8083']
+  - job_name: 'notification-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['notification-service:8084']
+  - job_name: 'lodging-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['lodging-service:8081']
 
   - job_name: 'node_exporter'
     static_configs:
