@@ -1,0 +1,1 @@
+kubectl apply -f rabbitmq-namespace.yml && kubectl apply -f rabbitmq-configmap.yml && kubectl apply -f rabbitmq-pvc.yml && kubectl apply -f rabbitmq-deployment.yml && kubectl apply -f rabbitmq-service.yml &&

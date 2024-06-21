@@ -58,6 +58,31 @@ spec:
                   key: db-port
             - name: SPRING_DATASOURCE_URL
               value: jdbc:postgresql://postgres.backend.svc.cluster.local:5432/devops_reservation_db 
+            - name: LODGE_SERVICE
+              valueFrom:
+                configMapKeyRef:
+                  name: reservation-configmap
+                  key: LODGE_SERVICE
+            - name: RABBITMQ_DEFAULT_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: reservation-configmap
+                  key: RABBITMQ_DEFAULT_USER
+            - name: RABBITMQ_DEFAULT_PASS
+              valueFrom:
+                configMapKeyRef:
+                  name: reservation-configmap
+                  key: RABBITMQ_DEFAULT_PASS
+            - name: SPRING_RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: reservation-configmap
+                  key: SPRING_RABBITMQ_HOST
+            - name: SPRING_RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: reservation-configmap
+                  key: SPRING_RABBITMQ_PORT
             - name: SPRING_DATASOURCE_USERNAME
               valueFrom:
                 secretKeyRef:

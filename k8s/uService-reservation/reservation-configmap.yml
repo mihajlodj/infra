@@ -10,6 +10,11 @@ data:
   service-port: "8082"
   POSTGRESQL_DB: devops_reservation_db
   SPRING_DATASOURCE_PASSWORD: cm9vdA==
+  LODGE_SERVICE: "http://lodging-service:8081"
+  SPRING_RABBITMQ_HOST: rabbitmq
+  SPRING_RABBITMQ_PORT: "5672"
+  RABBITMQ_DEFAULT_USER: guest
+  RABBITMQ_DEFAULT_PASS: guest
   # LOKI_ENABLED: "false"
   # LOKI_URL: "invalid-url"
   # LOGGING_LEVEL_LOKI: "OFF"

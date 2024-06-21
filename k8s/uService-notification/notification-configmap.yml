@@ -10,6 +10,8 @@ data:
   service-port: "8084"
   POSTGRESQL_DB: devops_notification_db
   SPRING_DATASOURCE_PASSWORD: cm9vdA==
+  SPRING_RABBITMQ_HOST: rabbitmq.rabbitmq.svc.cluster.local
+  SPRING_RABBITMQ_PORT: "5672"
   # LOKI_ENABLED: "false"
   # LOKI_URL: "invalid-url"
   # LOGGING_LEVEL_LOKI: "OFF"
