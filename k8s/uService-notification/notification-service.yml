@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: backend
+  labels: 
+    app: notification-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      name: notification-service
+      labels:
+        app: notification-service
+    spec:
+      initContainers:
+        - name: init-database
+          image: postgres:latest
+          envFrom:
+            - configMapRef:
+                name: notification-configmap
+            - configMapRef:
+                name: postgres-configmap-notification  # must use deployed postgres configuration
+            - secretRef:
+                name: postgres-secret-notification   # mu
+          command: 
+            - "sh"
+            - "-c"
+            - |
+              echo "Creating devops_notification_db database..."
+              psql -h postgres -U postgres -c "CREATE DATABASE devops_notification_db;"
+              echo "Database devops_notification_db created."
+
+      containers:
+        - name: notification-service
+          image: mihajlodj/devops-notification-service:1.0.0  # Update with your actual image
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8084
+          envFrom:
+            - secretRef:
+                name: postgres-secret-notification
+            - configMapRef:
+                name: notification-configmap
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-configmap-notification
+                  key: db-host
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-configmap-notification
+                  key: db-port
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres.backend.svc.cluster.local:5432/devops_notification_db 
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret-notification
+                  key: POSTGRES_USER
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret-notification
+                  key: POSTGRES_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: backend
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - protocol: TCP
+      name: http
+      port: 8084
+      targetPort: 8084
+
