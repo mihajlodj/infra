@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lodging-configmap
+  namespace: backend
+data:
+  MANAGEMENT_TRACING_ENABLED: "false"
+  MANAGEMENT_ZIPKIN_TRACING_ENABLED: "http://localhost:9411/api/v2/spans"
+  LOGGING_CONFIG: "classpath:logback-spring-local.xml"
+  service-port: "8081"
+  POSTGRESQL_DB: devops_hotels_db
+  SPRING_DATASOURCE_PASSWORD: cm9vdA==
+  # LOKI_ENABLED: "false"
+  # LOKI_URL: "invalid-url"
+  # LOGGING_LEVEL_LOKI: "OFF"

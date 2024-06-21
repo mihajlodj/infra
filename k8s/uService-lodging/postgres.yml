@@ -1,0 +1,86 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-lodging
+  namespace: backend
+spec:
+  selector:
+    app: postgres-lodging
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-lodging
+  namespace: backend
+spec:
+  serviceName: postgres-lodging
+  selector:
+    matchLabels:
+      app: postgres-lodging
+  template:
+    metadata:
+      labels:
+        app: postgres-lodging
+    spec:
+      containers:
+        - name: postgres
+          image: postgres
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret-lodging
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret-lodging
+                  key: POSTGRES_PASSWORD
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret-lodging
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: postgres-lodging-storage
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-lodging-storage
+          persistentVolumeClaim:
+            claimName: postgres-lodging-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-lodging-pvc
+  namespace: backend
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-lodging-pv
+  namespace: backend
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/postgres-lodging
+

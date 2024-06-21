@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lodging-service
+  namespace: backend
+  labels: 
+    app: lodging-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lodging-service
+  template:
+    metadata:
+      name: lodging-service
+      labels:
+        app: lodging-service
+    spec:
+      initContainers:
+        - name: init-database
+          image: postgres:latest
+          envFrom:
+            - configMapRef:
+                name: lodging-configmap
+            - configMapRef:
+                name: postgres-configmap-lodging  # must use deployed postgres configuration
+            - secretRef:
+                name: postgres-secret-lodging   # mu
+          command: 
+            - "sh"
+            - "-c"
+            - |
+              echo "Creating devops_hotels_db database..."
+              psql -h postgres -U postgres -c "CREATE DATABASE devops_hotels_db;"
+              echo "Database devops_hotels_db created."
+
+      containers:
+        - name: lodging-service
+          image: mihajlodj/devops-hotels-service:1.0.0  # Update with your actual image
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8081
+          envFrom:
+            - secretRef:
+                name: postgres-secret-lodging
+            - configMapRef:
+                name: lodging-configmap
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-configmap-lodging
+                  key: db-host
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-configmap-lodging
+                  key: db-port
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres.backend.svc.cluster.local:5432/devops_hotels_db 
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret-lodging
+                  key: POSTGRES_USER
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret-lodging
+                  key: POSTGRES_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lodging-service
+  namespace: backend
+spec:
+  selector:
+    app: lodging-service
+  ports:
+    - protocol: TCP
+      name: http
+      port: 8081
+      targetPort: 8081
+

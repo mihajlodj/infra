@@ -22,3 +22,24 @@ spec:
                 name: user-service
                 port:
                   number: 8080
+          - pathType: Prefix
+            path: /api/lodge
+            backend:
+              service:
+                name: lodging-service
+                port:
+                  number: 8081
+          - pathType: Prefix
+            path: /api/reservation
+            backend:
+              service:
+                name: reservation-service
+                port:
+                  number: 8082
+          - pathType: Prefix
+            path: /api/notifications
+            backend:
+              service:
+                name: notification-service
+                port:
+                  number: 8084
