@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reservation-service
+  namespace: backend
+  labels: 
+    app: reservation-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: reservation-service
+  template:
+    metadata:
+      name: reservation-service
+      labels:
+        app: reservation-service
+    spec:
+      initContainers:
+        - name: init-database
+          image: postgres:latest
+          envFrom:
+            - configMapRef:
+                name: reservation-configmap
+            - configMapRef:
+                name: postgres-configmap-reservation  # must use deployed postgres configuration
+            - secretRef:
+                name: postgres-secret-reservation   # mu
+          command: 
+            - "sh"
+            - "-c"
+            - |
+              echo "Creating devops_reservation_db database..."
+              psql -h postgres -U postgres -c "CREATE DATABASE devops_reservation_db;"
+              echo "Database devops_reservation_db created."
+
+      containers:
+        - name: reservation-service
+          image: mihajlodj/devops-reservation-service:1.0.0  # Update with your actual image
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8082
+          envFrom:
+            - secretRef:
+                name: postgres-secret-reservation
+            - configMapRef:
+                name: reservation-configmap
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-configmap-reservation
+                  key: db-host
+            - name: DB_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: postgres-configmap-reservation
+                  key: db-port
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres.backend.svc.cluster.local:5432/devops_reservation_db 
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret-reservation
+                  key: POSTGRES_USER
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret-reservation
+                  key: POSTGRES_PASSWORD
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reservation-service
+  namespace: backend
+spec:
+  selector:
+    app: reservation-service
+  ports:
+    - protocol: TCP
+      name: http
+      port: 8082
+      targetPort: 8082
+
