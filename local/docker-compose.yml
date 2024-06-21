@@ -49,7 +49,7 @@ services:
       - ftn_devops_network
 
   prometheus:
-    image: prom/prometheus:v2.35.0
+    image: prom/prometheus:latest
     ports:
       - "9090:9090"
     volumes:
@@ -57,6 +57,11 @@ services:
       - prometheus:/var/lib/prometheus
     networks:
       - ftn_devops_network
+    depends_on:
+      - rating-service
+      - reservation-service
+      - node-exporter
+      - cadvisor
 
   node-exporter:
     image: prom/node-exporter:v1.1.2
