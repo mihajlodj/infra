@@ -24,16 +24,58 @@ spec:
             mountPath: /etc/nginx/conf.d
       containers:
         - name: fe-service
-          image: mihajlodj/devops-fe:latest
+          image: mihajlodj/devops-fe:2.0.0
           imagePullPolicy: Always
           ports:
           - containerPort: 80
           volumeMounts:
           - name: nginx-config-writable
             mountPath: /etc/nginx/conf.d
+          - name: env-volume
+            mountPath: /usr/share/nginx/html/assets/json
+          env:
+            - name: USER_SERVICE
+              valueFrom:
+                configMapKeyRef:
+                  name: env-configmap
+                  key: USER_SERVICE
+            - name: API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: env-configmap
+                  key: API_URL
+            - name: LODGE_PHOTO_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: env-configmap
+                  key: LODGE_PHOTO_URL
+            - name: USER_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: env-configmap
+                  key: USER_API_URL
+            - name: LODGE_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: env-configmap
+                  key: LODGE_API_URL
+            - name: RESERVATION_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: env-configmap
+                  key: RESERVATION_API_URL
+            - name: RATING_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: env-configmap
+                  key: RATING_API_URL
+            
       volumes:
       - name: nginx-config-volume
         configMap:
           name: fe-configmap
       - name: nginx-config-writable
         emptyDir: {}
+      - name: env-volume
+        configMap:
+          name: env-configmap

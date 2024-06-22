@@ -10,6 +10,8 @@ data:
   service-port: "8081"
   POSTGRESQL_DB: devops_hotels_db
   SPRING_DATASOURCE_PASSWORD: cm9vdA==
+  CORS_ALLOWED-ORIGINS: "*"
+  CORS_ALLOWED_ORIGINS: "*"
   # LOKI_ENABLED: "false"
   # LOKI_URL: "invalid-url"
   # LOGGING_LEVEL_LOKI: "OFF"

@@ -14,4 +14,3 @@ data:
         }
       gzip  on;
     }
-  # Add all other necessary files similarly

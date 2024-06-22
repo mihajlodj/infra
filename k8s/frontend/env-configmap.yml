@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: env-configmap
+  namespace: backend
+data:
+  USER_SERVICE: "http://localhost:80"
+  API_URL: "http://localhost:80/api"
+  LODGE_PHOTO_URL: "http://localhost:80"
+  USER_API_URL: "http://localhost:80/api/users"
+  LODGE_API_URL: "http://localhost:80/api/lodge"
+  RESERVATION_API_URL: "http://localhost:80/api/reservation"
+  RATING_API_URL: "http://localhost:80/api/ratings"
+  config.json: |
+     "{\"USER_SERVICE\": \"http://localhost:80\",
+     "\"API_URL\": \"http://localhost:80/api\",
+     "\"LODGE_PHOTO_URL\": \"http://localhost:80\",
+     "\"USER_API_URL\": \"http://localhost:80/api/users\",
+     "\"LODGE_API_URL\": \"http://localhost:80/api/lodge\",
+     "\"RESERVATION_API_URL\": \"http://localhost:80/api/reservation\",
+     "\"RATING_API_URL\": \"http://localhost:80/api/ratings\"}"

@@ -35,7 +35,7 @@ sync
 
 echo "********************* Frontend service started *********************"
 cd ../frontend
-kubectl -n backend apply -f fe-configmap.yml && kubectl -n backend apply -f fe-deployment.yml && kubectl -n backend apply -f fe-service.yml && kubectl -n backend apply -f fe-load-balancer-service.yml 
+kubectl -n backend apply -f fe-configmap.yml && kubectl -n backend apply -f env-configmap.yml && kubectl -n backend apply -f fe-deployment.yml && kubectl -n backend apply -f fe-service.yml && kubectl -n backend apply -f fe-load-balancer-service.yml 
 sync
 echo "********************* Frontend service started *********************" 
 
