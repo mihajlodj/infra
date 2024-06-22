@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rating-service
+  namespace: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rating-service
+  template:
+    metadata:
+      labels:
+        app: rating-service
+    spec:
+      containers:
+      - name: rating-service
+        image: mihajlodj/devops-rating-service:1.0.0
+        ports:
+        - containerPort: 8083
+        envFrom:
+            - configMapRef:
+                name: rating-service-configmap
+        env:
+          - name: MONGO_HOST
+            valueFrom: 
+              configMapKeyRef:
+                name: rating-service-configmap
+                key: MONGO_HOST
+          - name: MONGO_PORT
+            valueFrom: 
+              configMapKeyRef:
+                name: rating-service-configmap
+                key: MONGO_PORT
+          - name: RABBITMQ_DEFAULT_USER
+            value: guest
+          - name: RABBITMQ_DEFAULT_PASS
+            value: guest
+          - name: SPRING_DATA_MONGODB_URI
+            valueFrom:
+              configMapKeyRef:
+                name: rating-service-configmap
+                key: SPRING_DATA_MONGODB_URI
+          - name: SPRING_DATA_MONGODB_DATABASE
+            valueFrom:
+              configMapKeyRef:
+                name: rating-service-configmap
+                key: SPRING_DATA_MONGODB_DATABASE
+          - name: SPRING_DATA_MONGODB_HOST
+            valueFrom:
+              configMapKeyRef:
+                name: rating-service-configmap
+                key: SPRING_DATA_MONGODB_HOST
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rating-service
+  namespace: backend
+spec:
+  selector:
+    app: rating-service
+  ports:
+    - protocol: TCP
+      port: 8083
+      targetPort: 8083
+  type: LoadBalancer

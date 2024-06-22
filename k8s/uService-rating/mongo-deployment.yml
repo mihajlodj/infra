@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+  namespace: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo
+  template:
+    metadata:
+      labels:
+        app: mongo
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:4.4.6
+          ports:
+            - containerPort: 27017
+          env:
+            - name: MONGO_HOST
+              valueFrom: 
+                configMapKeyRef:
+                  name: rating-service-configmap
+                  key: MONGO_HOST
+            - name: MONGO_PORT
+              valueFrom: 
+                configMapKeyRef:
+                  name: rating-service-configmap
+                  key: MONGO_PORT
+            - name: SPRING_DATA_MONGODB_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: rating-service-configmap
+                  key: SPRING_DATA_MONGODB_URI
+            - name: SPRING_DATA_MONGODB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: rating-service-configmap
+                  key: SPRING_DATA_MONGODB_DATABASE
+            - name: SPRING_DATA_MONGODB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: rating-service-configmap
+                  key: SPRING_DATA_MONGODB_HOST
+          volumeMounts:
+            - name: mongo-persistent-storage
+              mountPath: /data/db
+      volumes:
+        - name: mongo-persistent-storage
+          persistentVolumeClaim:
+            claimName: mongo-pvc
+        
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  namespace: backend
+spec:
+  selector:
+    app: mongo
+  ports:
+    - protocol: TCP
+      port: 27017
+      targetPort: 27017

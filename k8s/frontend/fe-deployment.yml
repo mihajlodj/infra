@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fe-service
+  namespace: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fe-service
+  template:
+    metadata:
+      labels:
+        app: fe-service
+    spec:
+      initContainers:
+        - name: init-nginx
+          image: busybox
+          command: ['sh', '-c', 'cp /config/default.conf /etc/nginx/conf.d/default.conf']
+          volumeMounts:
+          - name: nginx-config-volume
+            mountPath: /config
+          - name: nginx-config-writable
+            mountPath: /etc/nginx/conf.d
+      containers:
+        - name: fe-service
+          image: mihajlodj/devops-fe:latest
+          imagePullPolicy: Always
+          ports:
+          - containerPort: 80
+          volumeMounts:
+          - name: nginx-config-writable
+            mountPath: /etc/nginx/conf.d
+      volumes:
+      - name: nginx-config-volume
+        configMap:
+          name: fe-configmap
+      - name: nginx-config-writable
+        emptyDir: {}

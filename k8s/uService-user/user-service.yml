@@ -46,6 +46,10 @@ spec:
             - configMapRef:
                 name: user-configmap
           env:
+            - name: RABBITMQ_DEFAULT_USER
+              value: guest
+            - name: RABBITMQ_DEFAULT_PASS
+              value: guest
             - name: DB_HOST
               valueFrom:
                 configMapKeyRef:

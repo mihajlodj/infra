@@ -3,6 +3,8 @@ kind: Ingress
 metadata:
   name: ingress
   namespace: backend
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
@@ -43,3 +45,17 @@ spec:
                 name: notification-service
                 port:
                   number: 8084
+          - pathType: Prefix
+            path: /api/rating
+            backend:
+              service:
+                name: rating-service
+                port:
+                  number: 8083
+          - pathType: Prefix
+            path:  '/?(.*)'
+            backend:
+              service:
+                name: fe-service
+                port:
+                  number: 4200
